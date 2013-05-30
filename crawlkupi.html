@@ -1,0 +1,167 @@
+<h1 id='brief_technologique_projet_crawlkupi'>Brief Technologique Projet Crawlkupi</h1>
+
+<dl>
+<dt>Fabien Piuzzi</dt>
+
+<dd><a href='mailto:reefab@demenzia.net'>reefab@demenzia.net</a></dd>
+</dl>
+
+<h2 id='prsentation_du_projet'>Présentation du projet</h2>
+
+<p>Le besoin initial du client est de pouvoir &#8220;aspirer&#8221; les produits de site d&#8217;e-commerce en Russie autour de la mode.</p>
+
+<p>Ce projet n&#8217;a pas d&#8217;interface visiteur mais dispose d&#8217;une API d&#8217;administration ainsi que d&#8217;une autre pour l&#8217;export des données.</p>
+
+<p>En plus des données textuelles comme le nom, description, prix et autres informations relatives au produit, nous importons les images qui disposent d&#8217;un traitement particulier pour extraire les couleurs des produits.</p>
+
+<p>Actuellement, en production, des centaines de milliers de produits sont mis a jour quotidiennement et plus d&#8217;un million d&#8217;images sont disponibles.</p>
+
+<h2 id='nos_choix'>Nos choix</h2>
+
+<p>Ce projet répond à des contraintes techniques très particulières. Parcourir ces sites pour en extraire les informations revient a parser des gigaoctets de HTML très souvent formaté de manière invalide.</p>
+
+<p>Cela représente aussi un nombre énorme de requêtes HTTP à effectuer, mais il est cependant impeéatif de ne pas surchager le serveur distant.</p>
+
+<p>Ces imports s&#8217;effectuant quotidiennement sans interaction utilisateur, il nous a aussi fallu un système d&#8217;alerte efficace pour nous signaler les problèmes rencontrés.</p>
+<hr />
+<h2 id='architecture'>Architecture</h2>
+
+<h3 id='crawler'>Crawler</h3>
+
+<dl>
+<dt>Scrapy</dt>
+
+<dd><a href='http://scrapy.org'>http://scrapy.org</a></dd>
+
+<dd>
+<p>Scrapy is a fast high-level screen scraping and web crawling framework, used to crawl websites and extract structured data from their pages.</p>
+</dd>
+</dl>
+
+<p>Scrapy est un framework de création de crawler. Il prend en charge une grande partie de fonctionnalités obligatoires pour ce genre de logiciel, ce qui facilite énormément le développement. Par ailleurs, il laisse une grande liberté pour les autres fonctionnalités, comme l&#8217;analyse et le stockage des données.</p>
+
+<p>Nous avons utilisé le client HTTP de scrapy, avec leurs spiders xhtml/xml/sitemap ainsi que le moteur d&#8217;extraction XPath.</p>
+
+<p>La configuration par site n&#8217;est plus effectuée par du code Python mais par des fichiers de configuration en JSON. Cela nous permet de créer très facilement une nouveau fichier de configuration pour importer de nouveaux sites mais nous avons quand meme gardé la possibilité d&#8217;avoir du code custom par site si besoin (ce qui arrive très rarement).</p>
+
+<p>Une librairie d&#8217;analyse d&#8217;images a été développée spécifiquement pour ce projet. Elle permet d&#8217;extraire les couleurs des vêtements présents dans les photos, en ignorant les couleurs de fond/peau/autres et en identifiant les photos sur fond blanc ou pas.</p>
+
+<p>Cette librairie utilise la librairie <a href='http://www.scipy.org'>Scipy</a> pour les fonctions mathématiques avancées présentes ainsi que leur intégration avec la librairie <a href='http://www.pythonware.com/products/pil/'>PIL</a> de traitement d&#8217;image.</p>
+
+<p>Les images sont téléchargées, analysées et stockées sur le serveur pour être réutilisés ensuite par d&#8217;autres services.</p>
+
+<h4 id='pourquoi'>Pourquoi</h4>
+
+<p>Le scraping de site web est une tâche bien plus ardue que ce que l&#8217;on pourrait penser au premier abord. Les sites web sont conçus pour être vus par des navigateurs web et ceux-ci sont très laxistes sur les données qu&#8217;ils acceptent. Cela rend très complexe le fait de pouvoir extraire ces données sans passer par un navigateur. Scrapy prend en charge une grosse partie des &#8220;bidouillages&#8221; nécessaires pour parcourir ces sites ainsi qu&#8217;énormement de fonctions annexes fort pratiques.</p>
+
+<p>Scrapy dispose en outre d&#8217;une excellente documentation, est très facilement extensible sans avoir à le modifier et dispose d&#8217;outils pour aider à la maintenance/développement/exploitation.</p>
+
+<h3 id='base_de_donnes'>Base de données</h3>
+
+<dl>
+<dt>CouchDB</dt>
+
+<dd><a href='http://couchdb.apache.org'>http://couchdb.apache.org</a></dd>
+
+<dd>
+<p>Apache CouchDB™ is a database that uses JSON for documents, JavaScript for MapReduce queries,</p>
+</dd>
+</dl>
+
+<p>CouchDB est un serveur de documents en JSON avec une interface HTTP REST.</p>
+
+<h4 id='pourquoi'>Pourquoi</h4>
+
+<p>Les produits une fois importés doivent être mis a la disposition d&#8217;autres services. Généralement, une architecture plus classique serait de stocker ces données dans une base de donnée SQL et de développer une API spécialisée pour l&#8217;échange de ses données vers l&#8217;extérieur mais l&#8217;utilisation de CouchDB simplifie grandement ceci.</p>
+
+<p>Les données extraites des sites étant facilement sérialisables en JSON, chaque produit correspond à un document dans CouchDB. Le format de stockage natif est donc utilisable pour la communication.</p>
+
+<p>Les services externes peuvent directement interogger le CouchDB pour importer les produits, en utilisant l&#8217;API très complète de CouchDB à ce sujet.</p>
+
+<p>La fonctionnalité native de versioning des documents nous permet aussi de consulter l&#8217;historique des modifications d&#8217;un produit.</p>
+
+<p>De plus, spécifique a ce projet comme il n&#8217;y a pas d&#8217;interface utilisateur, futon, l&#8217;interface d&#8217;administration/edition de CouchDB, nous permet de maniere simple de consulter les données à partir d&#8217;un navigateur. Ceci encore une fois sans que nous ayons quoi que ce soit a développer.</p>
+
+<p>CouchDB remplit donc de maniere mûre et fiable une grande partie des demandes du projet.</p>
+
+<h3 id='api'>API</h3>
+
+<dl>
+<dt>Twisted</dt>
+
+<dd><a href='http://twistedmatrix.com/trac/'>http://twistedmatrix.com/trac/</a></dd>
+
+<dd>
+<p>Twisted is an event-driven networking engine written in Python</p>
+</dd>
+</dl>
+
+<p>Pour orchestrer le lancement des crawls et fournir une API d&#8217;administration, un daemon a été développé avec Twisted.</p>
+
+<p>Les crawls pouvant prendre plusieurs heures, il est important d&#8217;avoir un système de monitoring/logging efficace.</p>
+<hr />
+<h2 id='tooling'>Tooling</h2>
+
+<p>Une liste des outils utilisés pour faciliter le développement/déploiement/exploitation:</p>
+
+<ul>
+<li>
+<dl>
+<dt>Virtualenv</dt>
+
+<dd><a href='http://pypi.python.org/pypi/virtualenv'>http://pypi.python.org/pypi/virtualenv</a></dd>
+
+<dd>
+<p>Virtual Python Environment builder</p>
+</dd>
+</dl>
+
+<p>Permet d&#8217;avoir un environnement séparé pour le code Python, indépendamment des packages python du système. En outre, ne nécessite donc pas de root pour leur installation. Facilite l&#8217;installation et le déploiement.</p>
+</li>
+
+<li>
+<dl>
+<dt>Fabric</dt>
+
+<dd><a href='http://fabfile.org'>http://fabfile.org/</a></dd>
+
+<dd>
+<p>Fabric is a Python (2.5 or higher) library and command-line tool for streamlining the use of SSH for application deployment or systems administration tasks.</p>
+</dd>
+</dl>
+
+<p>L&#8217;installation et le déploiement sont automatisés avec Fabric. Pousser une nouvelle version du projet sur les serveurs distants ne requiert qu&#8217;une seule commande et prend aussi en charge l&#8217;installation de nouvelles dépendances ainsi que le redémarrage des services.</p>
+</li>
+
+<li>
+<dl>
+<dt>Supervisor</dt>
+
+<dd><a href='http://supervisord.org'>http://supervisord.org</a></dd>
+
+<dd>
+<p>Supervisor is a client/server system that allows its users to monitor and control a number of processes on UNIX-like operating systems.</p>
+</dd>
+</dl>
+
+<p>Comme son nom l&#8217;indique, il supervise les services de l&#8217;application. L&#8217;avantage est qu&#8217;il est contrôlable par l&#8217;utilisateur et facilement scriptable. Le redémarrage par fabric lors des mises a jour est donc simple. Il vérifie aussi si les services démarrent correctement et peut les rédemarrer automatiquement en cas de crash.</p>
+</li>
+
+<li>
+<dl>
+<dt>Redmine</dt>
+
+<dd><a href='http://www.redmine.org'>http://www.redmine.org</a></dd>
+
+<dd>
+<p>Redmine is a flexible project management web application. Written using the Ruby on Rails framework, it is cross-platform and cross-database.</p>
+</dd>
+</dl>
+
+<p>Ce projet dispose d&#8217;une interaction avec Redmine ; en cas de problème relevé par les services, un ticket est automatiquement créé sur notre Redmine pour que les développeurs puissent s&#8217;en occuper.</p>
+</li>
+</ul>
+<hr />
+<h2 id='conclusion'>Conclusion</h2>
+
+<p>Ce projet qui est en production a démontré l&#8217;intérêt d&#8217;utiliser des briques open source pour les parties &#8220;déja resolues&#8221; d&#8217;un projet, ce qui a donc permis de se concentrer sur les parties réellement novatrices.</p>

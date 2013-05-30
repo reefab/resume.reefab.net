@@ -1,0 +1,343 @@
+<h1 id='brief_technologique_metrics'>Brief Technologique metrics</h1>
+
+<dl>
+<dt>Fabien Piuzzi</dt>
+
+<dd><a href='mailto:reefab@demenzia.net'>reefab@demenzia.net</a></dd>
+</dl>
+
+<h2 id='prsentation_de_lapplication'>Présentation de l&#8217;application</h2>
+
+<p>L&#8217;application Metrics est un &#8220;Dashboard&#8221; affichant des données financières venant de plusieurs services et présentées de différentes manières (tableaux, graphiques&#8230;). De plus, ces données sont présentées de manière historique, avec la possibilité de naviguer par date.</p>
+
+<p>Prévue pour être utilisée principalement sur un iPad et nécessitant une meilleure réactivité que ce que permet une architecture client &lt;-&gt; serveur, l&#8217;application a donc été réalisée en HTML5.</p>
+
+<p>Une contrainte particulière est de permettre des connexions sans login/mot de passe, mais en utilisant une urls unique pour chaque utilisateur.</p>
+
+<h2 id='notre_approche'>Notre approche</h2>
+
+<p>Notre approche a été de concevoir une architecture moderne, pour obtenir une application plus rapide que ce qu&#8217;il est possible de faire de manière classique, mais aussi pour que l&#8217;architecture en elle-même repose sur des bases saines et avec un code propre (problème commun aux applications javascript).</p>
+
+<p>Nous avons retenu un certain nombre de technologies libres et innovantes pour arriver à ce résultat.</p>
+<hr />
+<h2 id='architecture'>Architecture</h2>
+
+<h3 id='application_web_classique'>Application web classique</h3>
+
+<p>Pour rappel, voici comment fonctionne une application classique :</p>
+
+<p>Le client web envoie une requête à un serveur http. Celui-ci exécute un script/application en local, qui interroge en général une base de données. Une fois que les données provenant de la base de données ont été traitées par l&#8217;application serveur-side, le serveur http renvoie cette réponse au serveur web.</p>
+
+<p>Pour simplifier, la majorité du traitement se fait sur le serveur et le client web ne fait que l&#8217;affichage.</p>
+
+<h3 id='application_couchapphtml5'>Application CouchApp/HTML5</h3>
+
+<p>Pour éviter de faire patienter l&#8217;utilisateur à chaque manipulation, les données financières sont chargées en intégralité dans l&#8217;application lors de son chargement initial. Les requêtes et calculs sur ses données sont ensuite effectuées a la demande dans le navigateur du client.</p>
+
+<p>Lors de la première connexion, le navigateur reçoit la page html initiale, les données statiques ainsi que les données financières pour une année. Il n&#8217;y a ensuite pas de requêtes effectuées sur le serveur, ce qui permet une utilisation offline.</p>
+
+<p>Grâce à cela, l&#8217;utilisateur peut profiter de temps de réponse simplement impossibles à réaliser en utilisant une architecture plus classique. La nôtre se rapproche d&#8217;une application &#8220;native&#8221; sans en avoir la complexité.</p>
+
+<p>De plus, la charge serveur est minime : en dehors du chargement initial, l&#8217;utilisation de l&#8217;application ne crée pas de charge sur le serveur. Il est donc possible d&#8217;avoir beaucoup plus de clients quasiment sans impact.</p>
+
+<h2 id='choix_technologiques'>Choix Technologiques</h2>
+
+<h3 id='base_de_donnes'>Base de données</h3>
+
+<dl>
+<dt>CouchDB</dt>
+
+<dd><a href='http://couchdb.apache.org'>http://couchdb.apache.org</a></dd>
+
+<dd>
+<p>Apache CouchDB™ is a database that uses JSON for documents, JavaScript for MapReduce queries,</p>
+</dd>
+</dl>
+
+<p>C&#8217;est la pièce maîtresse de l&#8217;application. Elle stocke l&#8217;intégralité des données, c&#8217;est par CouchDB que le client reçoit l&#8217;application et que les données financières sont mises a jour.</p>
+
+<h4 id='pourquoi'>Pourquoi</h4>
+
+<p>CouchDB est un serveur de documents, il sert des documents JSON a travers une interface http REST.</p>
+
+<p>Cela a plusieurs avantages : le JSON est un format de données nativement reconnu par le javascript (de par son origine) et comme les interactions avec CouchDB se font en HTTP, les clients web peuvent l&#8217;interroger de manière extrêmement simple.</p>
+
+<p>De plus, il est possible de stocker des fichiers autres que JSON ainsi que de manipuler des documents aà l&#8217;aide de Javascript tournant dans CouchDB.</p>
+
+<p>Cela permet d&#8217;héberger des applications servies a partir de CouchDB. Celles-ci sont appelées CouchApps.</p>
+
+<p>De plus, CouchDB fournit des fonctionnalités comme gestion d&#8217;utilisateurs et versioning des documents, ainsi qu&#8217;un flux permettant d&#8217;obtenir les changements des documents en &#8220;temps réel&#8221; sans avoir à les re-télécharger ou à interroger le serveur.</p>
+
+<p>La gestion d&#8217;utilisateurs dans CouchDB est intéressante, car ne peut être effectuée dans l&#8217;application cliente qui tourne dans le navigateur du client et qui peut donc être modifiée par celui-ci.</p>
+
+<p>Chaque type de donnée financière dispose d&#8217;un document JSON par journée, mais le client récupère l&#8217;intégralité de ces données en une seule requête par type de donnée.</p>
+
+<h4 id='dsavantages'>Désavantages</h4>
+
+<p>CouchDB dispose d&#8217;une certaine flexibilité mais il est difficile a étendre si les demandes d&#8217;un projet dépassent ce qui est possible de faire avec CouchDB.</p>
+
+<p>Il faut donc éviter d&#8217;utiliser CouchDB en dehors des cas d&#8217;utilisation typiques.</p>
+
+<h3 id='language'>Language</h3>
+
+<dl>
+<dt>Coffescript</dt>
+
+<dd><a href='http://coffeescript.org'>http://coffeescript.org</a></dd>
+
+<dd>
+<p>CoffeeScript is a little language that compiles into JavaScript.</p>
+</dd>
+</dl>
+
+<p>Coffescript est un langage qui se convertit en Javascript. Il peut paraître contre-intuitif de remplacer un langage nativement reconnu par les navigateurs par un qui ne l&#8217;est pas, mais ce langage présente des avantages certains pour l&#8217;utilisation dans ce type d&#8217;application tout en restant compatible avec le Javascript.</p>
+
+<h4 id='pourquoi'>Pourquoi</h4>
+
+<p>La syntaxe est un mélange de Python et de Ruby.</p>
+
+<p>Les avantages principaux sont:</p>
+
+<ul>
+<li>Plus simple: Les fonctionnalités présentées dans javascript sont mises en avant de manière plus simple</li>
+
+<li>Plus de sécurité: le scope des variables est restreint, il n&#8217;y a plus de variables globales et moins de risques de causer des effets de bords.</li>
+
+<li>Plus compact: Il faut moins de lignes de coffescript pour l&#8217;équivalent Javascript, cela facilite l&#8217;écriture et la lecture.</li>
+</ul>
+
+<p>Dans le cadre d&#8217;une application de plusieurs milliers de lignes comme celle-ci, ces avantages sont particulièrement intéressants.</p>
+
+<p>Le fait que le code coffeescript se convertit en 1:1 vers du Javascript rend le debugging aussi simple que si le code était originalement en Javascript, contrairement a ce que l&#8217;on pourrait penser au premier abord.</p>
+
+<p>Il y a aussi des fonctionnalités non-présentes nativement en Javascript, comme les mixins et les list comprenhension. Ces dernières sont extrêmement utiles dans une application qui modifie de grandes quantités de données vectorielles.</p>
+
+<h4 id='dsavantages'>Désavantages</h4>
+
+<p>Le code Coffescript doit être converti en Javascript avant de pouvoir être exécuté par le navigateur. Ce n&#8217;est pas un problème dans notre cas (voir Kanso plus bas).</p>
+
+<h3 id='framework'>Framework</h3>
+
+<dl>
+<dt>Spine</dt>
+
+<dd><a href='http://spinejs.com'>http://spinejs.com</a></dd>
+
+<dd>
+<p>Build Awesome JavaScript MVC Applications</p>
+</dd>
+</dl>
+
+<p>Spine est un Framework MVC en Javascript qui permet de créer des applications web de manière simple avec une séparation MVC pour un code &#8220;propre&#8221;.</p>
+
+<h4 id='pourquoi'>Pourquoi</h4>
+
+<p>Si la barrière d&#8217;entrée pour faire des applications webs en javascript est très faible, il est difficile de faire des applications propres et maintenables sans séparer cette application en plusieurs couches.</p>
+
+<p>Contrairement aux applications mélangeant allègrement le javascript/html/php/css et autre, cette application permet de ne pas avoir de mélanges de cette sorte, ce qui rend la maintenance et la collaboration de ce projet bien plus facile.</p>
+
+<p>Avec Spine, notre application est séparée de la manière suivante:</p>
+
+<ul>
+<li>M: Model Les données financières venant de CouchDB. Il y a par ailleurs une extension CouchDB pour Spine permettant d&#8217;intégrer ces données en quelques lignes.</li>
+
+<li>V: View Les vues, qui correspondent a des templates HTML en Handlebars.</li>
+
+<li>C: Controller Chaque partie de l&#8217;application dispose d&#8217;un contrôleur où les données sont préparées a l&#8217;affichage</li>
+</ul>
+
+<p>Ce framework est très simple (500 lignes en tout) mais apporte un cadre et des fonctionnalités éléments permettant d&#8217;avoir un code propre avec le moins d&#8217;effets de bord possible.</p>
+
+<p>Par exemple, les raccourcis fournis pour manipuler les éléments d&#8217;une view associée à un contrôleur ne s&#8217;appliquent qu&#8217;au contrôleur en question, évitant de causer des bugs graphiques.</p>
+
+<p>Spine a été choisi en particulier pour la qualité de sa documentation, son support Coffeescript et son intégration avec Kanso/CouchDB.</p>
+
+<p>Les opérations sont prévues pour être non-bloquantes, les interactions événementielles pour avoir une application toujours réactive.</p>
+
+<p>Spine peut utiliser la gestion de classes de Coffescript pour plus de concision.</p>
+
+<h4 id='dsavantages'>Désavantages</h4>
+
+<p>Les abstractions supplémentaires complexifient légèrement le debuging.</p>
+
+<h4 id='templates'>Templates</h4>
+
+<dl>
+<dt>Handlebars</dt>
+
+<dd><a href='http://handlebarsjs.com'>http://handlebarsjs.com</a></dd>
+
+<dd>
+<p>Handlebars provides the power necessary to let you build semantic templates effectively with no frustration.</p>
+</dd>
+</dl>
+
+<p>Moteur de templating HTML en javascript, pour éviter de manipuler le HTML directement.</p>
+
+<h3 id='packaging'>Packaging</h3>
+
+<dl>
+<dt>Kanso</dt>
+
+<dd><a href='http://kan.so'>http://kan.so</a></dd>
+
+<dd>
+<p>Kanso is the best way to create and share apps on CouchDB.</p>
+</dd>
+</dl>
+
+<h4 id='pourquoi'>Pourquoi</h4>
+
+<p>Kanso permet de packager de déployer facilement des CouchApp. Il n&#8217;y a aucune fonctionnalité visible par l&#8217;utilisateur, mais le développement et le déploiement sont grandement facilités.</p>
+
+<p>Les fichiers coffescript sont automatiquement convertis en javascript. Les fichiers LESS sont automatiquement convertis en CSS.</p>
+
+<p>Le code de l&#8217;application étant organisé en modules <a href='http://www.commonjs.org'>CommonJS</a>, l&#8217;intégralité du code se retrouve avec les templates dans un seul fichier.</p>
+
+<p>Le déploiement est extrêmement simple:</p>
+
+<p><code>$ kanso push</code></p>
+
+<p>pour les déploiements en local. Ceci est même effectué automatiquement pour nous lors de l&#8217;édition des fichiers.</p>
+
+<p><code>$ kanso push http://user:pass@server.example.org/metrics</code></p>
+
+<p>pour les déploiements à distance.</p>
+
+<h4 id='dsavantages'>Désavantages</h4>
+
+<p>Documentation quasi inexistante.</p>
+
+<h3 id='framework'>Framework</h3>
+
+<dl>
+<dt>Bootstrap</dt>
+
+<dd><a href='http://twitter.github.com/bootstrap/'>http://twitter.github.com/bootstrap/</a></dd>
+
+<dd>
+<p>Sleek, intuitive, and powerful front-end framework for faster and easier web development.</p>
+</dd>
+</dl>
+
+<p>Bootstrap, comme son nom l&#8217;évoque, évite de commencer les CSS d&#8217;un site/app a partir de zéro.</p>
+
+<h4 id='pourquoi'>Pourquoi</h4>
+
+<p>Bootstrap fournit des éléments graphiques, des fonctionnalités de mise en page fort utiles ainsi qu&#8217;un style par défaut assez agréable.</p>
+
+<p>De plus, ce style est facilement modifiable, d&#8217;autant plus que Bootstrap utilise LESS.</p>
+
+<h4 id='desavantages'>Desavantages</h4>
+
+<p>Certains styles par défaut sont modifiés par Bootstrap, ce qui peut causer des effets de bord lors de l&#8217;intégration de templates/javascript non prévus pour Bootstrap.</p>
+
+<h3 id='preprocesseur_css'>Pre-processeur CSS</h3>
+
+<dl>
+<dt>LESS</dt>
+
+<dd><a href='http://lesscss.org'>http://lesscss.org</a></dd>
+
+<dd>
+<p>The dynamic stylesheet language.</p>
+</dd>
+</dl>
+
+<p>Simplifie la maintenance des CSS.</p>
+
+<h3 id='icnes'>Icônes</h3>
+
+<dl>
+<dt>Font Awesome</dt>
+
+<dd><a href='http://fortawesome.github.com/Font-Awesome/'>http://fortawesome.github.com/Font-Awesome/</a></dd>
+
+<dd>
+<p>The iconic font designed for use with Twitter Bootstrap</p>
+</dd>
+</dl>
+
+<p>L&#8217;affichage devant être indépendant de la résolution utilisée par le navigateur, pour que l&#8217;application puisse profiter de l&#8217;affichage Retina d&#8217;un iPad, toutes les icônes utilisées sur le site viennent de &#8220;Font Awesome&#8221;. Il s&#8217;agit d&#8217;un set d&#8217;icônes packagées de manière vectorielle dans un fichier de police de caractères.</p>
+
+<p>De plus, Font-Awesome supporte Bootstrap et permet donc de les intégrer de manière très simple dans le code HTML.</p>
+<hr />
+<h3 id='backend'>Backend</h3>
+
+<dl>
+<dt>NodeJS</dt>
+
+<dd><a href='http://nodejs.org'>http://nodejs.org</a></dd>
+
+<dd>
+<p>Node.js is a platform built on Chrome&#8217;s JavaScript runtime for easily building fast, scalable network applications.</p>
+</dd>
+</dl>
+
+<p>Contrairement à l&#8217;utilisation classique de NodeJS, il n&#8217;est ici pas utilisé comme serveur mais comme client uniquement.</p>
+
+<p>Les données financières sont télechargées à partir d&#8217;une autre plateforme, manipulées légèrement par une application NodeJS (en Coffescript) puis poussées vers le CouchDB. Ceci, quotidiennement.</p>
+
+<p>Cette application de backend peut être réalisée dans n&#8217;importe quel langage/plateforme mais NodeJS étant de toute façon déjà utilisé comme dépendance pour d&#8217;autres fonctionnalités (coffeescript/kanso/less), il a été décidé de le réutiliser pour éviter d&#8217;en ajouter.</p>
+
+<h3 id='serveur_web'>Serveur Web</h3>
+
+<dl>
+<dt>Nginx</dt>
+
+<dd><a href='http://nginx.org/en/'>http://nginx.org/en/</a></dd>
+
+<dd>
+<p>nginx <span>engine x</span> is an HTTP and reverse proxy server</p>
+</dd>
+</dl>
+
+<p>Un reverse proxy nginx est situé en aval du CouchDB pour compresser les données avant leur trajet sur le réseau. Les données étant exclusivement textuelles (pas d&#8217;images dans l&#8217;application, explication plus bas) le taux de compression est particulièrement élevé. Le chargement initial, qui est donc le seul, ne prend que quelques secondes.</p>
+
+<p>De plus, nginx dispose d&#8217;un support pour de l&#8217;exécution de code LUA dans ses fichiers de configuration.</p>
+
+<p>Cette fonctionnalité est utilisée ici pour permettre d&#8217;extraire un login/mot de passe d&#8217;une url et de les convertir en header HTTP passé a CouchDB, ceci de manière transparente pour l&#8217;utilisateur.</p>
+
+<p>CouchDB peut utiliser de l&#8217;authentification basique, mais ceci n&#8217;est actuellement (et malheureusement) plus utilisable a partir de certains navigateurs à cause de protections anti-phising.</p>
+
+<p>Exemple:</p>
+
+<p><code>http://metrics.example.org/user/pass/</code></p>
+
+<p>Vers l&#8217;équivalent de:</p>
+
+<p><code>http://user:pass@metrics.example.org/</code></p>
+
+<p>Qui est en fait:</p>
+
+<p><code>http://metrics.example.org/</code></p>
+
+<p>Avec un header HTTP:</p>
+
+<p><code>Authorization &quot;Basic &lt;user:pass encodé en base64&gt;&quot;;</code></p>
+
+<p>LUA est utilisé pour l&#8217;encodage Base64.</p>
+<hr />
+<h2 id='conclusion'>Conclusion</h2>
+
+<p>Ces technologies ont étés choisies en fonction des contraintes propres a cette application, mais aussi à cause de leurs interactions.</p>
+
+<p>Spine et Coffeescript permettent d&#8217;écrire des applications web complexes de manière plus propre, rapide et sûre.</p>
+
+<p>CouchDB et Kanso permettent de packager/déployer/stocker/servir ce type d&#8217;application ainsi que leurs données de manière très simple et compacte.</p>
+
+<p>Bootstrap et Font-Awesome ont permis de réaliser de manière simple un graphisme quasi-intégralement vectoriel et donc indépendant de la résolution.</p>
+
+<p>Cela nous a permis de créer une architecture propre et facilement maintenable et qui peut servir de base pour d&#8217;autres applications.</p>
+
+<p>A première vue, cela peut sembler un nombre important de technologies pour une application &#8220;légère&#8221; mais la majorité dispose d&#8217;une utilisation transparente.</p>
+
+<p>Hors de l&#8217;etape initiale de conception et de mise en place de l&#8217;architecture, le développeur n&#8217;interagit pas directement avec elles.</p>
+
+<p>Par exemple, la seule installation nécessaire sur le serveur est CouchDB.</p>
+
+<h2 id='evolutions_possibles'>Evolutions possibles</h2>
+
+<p>Un mode offline peut être rajouté simplement.</p>
+
+<p>Il est aussi possible de rajouter un support de mise a jour de données en temps réel. Le serveur CouchDB peut &#8220;pusher&#8221; les changements vers les clients qui peuvent mettre a jour l&#8217;affichage de manière transparente pour l&#8217;utilisateur.</p>

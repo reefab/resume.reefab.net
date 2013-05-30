@@ -1,0 +1,254 @@
+<h1 id='brief_technologique_application_sleep'>Brief Technologique application Sleep</h1>
+
+<dl>
+<dt>Fabien Piuzzi</dt>
+
+<dd><a href='mailto:reefab@demenzia.net'>reefab@demenzia.net</a></dd>
+</dl>
+
+<h2 id='prsentation_de_lapplication'>Présentation de l&#8217;application</h2>
+
+<p>L&#8217;application sleep permet à l&#8217;utilisateur de surveiller la qualité de ses nuits. Un capteur sans fil situé sur son matelas transmet les mouvements grâce a une borne sur notre plateforme en passant par une API.</p>
+
+<p>Le traitement des données effectué, l&#8217;utilisateur peut consulter un historique de ses nuits grâce a une interface web déportée.</p>
+
+<p>Il y a aussi une interface de configuration pour apporter des valeurs initiales (âge de l&#8217;utilisateur, heures habituelles de début/fin de nuit).</p>
+
+<h2 id='contraintes'>Contraintes</h2>
+
+<p>Chaque réception de nouvel évènement (mouvement) nécessite un recalcul complet de la nuit en cours. Le problème est que de nouveaux évènements peuvent arriver lors d&#8217;un recalcul. De plus la période de réveil d&#8217;une zone géographique entraîne une réception en masse d&#8217;évènements simultanés, générant une certaine montée en charge des traitements.</p>
+
+<p>Nous devons apporter une réponse rapide au serveur nous envoyant les évènements pour éviter de le ralentir. Le traitement de ces évènements doit donc se faire de manière non-bloquante.</p>
+
+<p>Pour le respect de la vie privée de l&#8217;utilisateur, aucune information personnelle n&#8217;est stockée a aucun moment. Les évènements ne sont pas conservés plus de 24h pour les mêmes raisons.</p>
+
+<h2 id='notre_approche'>Notre approche</h2>
+
+<p>Cette problématique demande que l&#8217;architecture permette de gérer une file d&#8217;attente d&#8217;évènements pour qu&#8217;en cas d&#8217;arrivée trop rapide de ceux-ci, le traitement ne soit pas overloadé.</p>
+
+<p>Il a eté decidé que le traitement des évènements se fasse de maniere non-bloquante avec une queue par utilisateur/nuit.</p>
+
+<p>A chaque réception d&#8217;évènement, celui-ci est ajouté a une queue, et notre application répond au serveur immédiatement, avant de lancer le traitement.</p>
+
+<p>Si un traitement de cette queue est en cours, celui ci est annulé car il est maintenant invalide suite a la réception d&#8217;un nouvel évènement.</p>
+
+<p>Le traitement en lui-même est déporté sur un service separé et peut utiliser plusieurs processeurs/core et même plusieurs serveurs si besoin de redondance.</p>
+
+<p>Une fois le calcul effectué, la nuit est mise a jour et est consultable sur l&#8217;interface web de l&#8217;application.</p>
+
+<p>Cette interface web est une CouchApp, la consultation étant simplement une lecture d&#8217;un document JSON representant la nuit. L&#8217;interface n&#8217;a donc pas besoin de communiquer avec l&#8217;application principale.</p>
+<hr />
+<h2 id='architecture'>Architecture</h2>
+
+<h3 id='backend'>Backend</h3>
+
+<p>Le backend reçoit les évènements, effectue les traitements, enregistre les résultats des nuits et dispose d&#8217;une petite interface de configuration.</p>
+
+<p>Ce serveur utilise Python, Flask Gevent, Redis et Celery.</p>
+
+<h4 id='langage'>Langage</h4>
+
+<dl>
+<dt>Python</dt>
+
+<dd><a href='http://www.pyhon.org'>http://www.python.org</a></dd>
+
+<dd>
+<p>Python is a programming language that lets you work more quickly and integrate your systems more effectively</p>
+</dd>
+</dl>
+
+<h5 id='pourquoi'>Pourquoi</h5>
+
+<p>Python a un support mûr pour les applications non-bloquantes et évènementielles. De plus il est particulièrement adapté pour les calculs mathématiques grâce a des librairies tierces de reference.</p>
+
+<h4 id='queue'>Queue</h4>
+
+<dl>
+<dt>Celery</dt>
+
+<dd><a href='http://celeryproject.org'>http://celeryproject.org</a></dd>
+
+<dd>
+<p>Celery is an asynchronous task queue/job queue based on distributed message passing. It is focused on real-time operation, but supports scheduling as well.</p>
+</dd>
+</dl>
+
+<p>Celery est un systeme en Python pour distribuer/scheduler des tâches. Cela nous permet de déporter le traitement des nuits et d&#8217;interrompre leur calculs si besoin.</p>
+
+<h5 id='pourquoi'>Pourquoi</h5>
+
+<p>L&#8217;intérêt est de séparer chaque traitement en tâche distincte. Ces tâches sont des &#8220;Acteurs<sup id='fnref:1'><a href='#fn:1' rel='footnote'>1</a></sup>&#8221; pour garantir une cohérence des traitements. Ceux-ci etant potentiellement assez gourmands en temps processeur, il est possible d&#8217;en exécuter plusieurs par processeurs/core.</p>
+
+<p>Nous ne faisons que stocker les évènements dans une queue Redis par utilisateur et envoyer un message a Celery pour lui dire de recalculer la nuit avec ces événements lorsqu&#8217;un nouveau est reçu.</p>
+
+<p>Celery fournit de plus l&#8217;infrastructure nécessaire pour distribuer le traitement sur plusieurs machines pour plus de performance et/ou redondance.</p>
+
+<p>Redis nous permet de &#8220;persister&#8221; les taches, ce qui permet de redémarrer le celeryd sans perdre d&#8217;information.</p>
+
+<h5 id='dsavantages'>Désavantages</h5>
+
+<p>L&#8217;infrastructure est assez complexe niveau serveur. Il y a donc le backend en lui-même, celeryd dans lequel tournent les tâches, Redis pour les queues, CouchDB pour la configuration et les résultats&#8230;</p>
+
+<p>Cela fait pas mal de daemons tournant en même temps.</p>
+
+<h4 id='base_de_donnes'>Base de données</h4>
+
+<dl>
+<dt>Redis</dt>
+
+<dd><a href='http://www.gevent.org'>http://redis.io</a></dd>
+
+<dd>
+<p>Redis is an open source, advanced key-value store.</p>
+</dd>
+</dl>
+
+<p>Redis est utilisé pour stocker la queue de Celery et aussi les évènements d&#8217;une nuit. Cela rend possible d&#8217;avoir une redondance sur plusieurs serveurs et de survivre aux crashs physiques éventuels du serveur.</p>
+
+<h5 id='pourquoi'>Pourquoi</h5>
+
+<p>Redis est simple et rapide et dispose des fonctionnalités nécessaires.</p>
+
+<p>Toutes les données inscrites dans le Redis ont un TTL<sup id='fnref:2'><a href='#fn:2' rel='footnote'>2</a></sup>, ce qui évite d&#8217;amasser un nombre croissant de données ou d&#8217;avoir à implémenter un système de nettoyage. Cela permet aussi de garantir que les évènements ne sont pas conservés plus de 24h pour respecter la vie privée de l&#8217;utilisateur.</p>
+
+<h4 id='microframework_web'>Micro-Framework Web</h4>
+
+<dl>
+<dt>Flask</dt>
+
+<dd><a href='http://flask.pocoo.org'>http://flask.pocoo.org</a></dd>
+
+<dd>
+<p>Flask is a microframework for Python based on Werkzeug, Jinja 2 and good intentions.</p>
+</dd>
+</dl>
+
+<h5 id='pourquoi'>Pourquoi</h5>
+
+<p>Le backend a des besoins très limités niveau web. Flask est vraiment très léger en ne fournissant que les fonctionnalités de base mais permet d&#8217;etre étendu de manière simple avec d&#8217;autres technologies.</p>
+<hr />
+<h4 id='librairie_vnementielle'>Librairie évènementielle</h4>
+
+<dl>
+<dt>Gevent</dt>
+
+<dd><a href='http://www.gevent.org'>http://www.gevent.org</a></dd>
+
+<dd>
+<p>gevent is a coroutine-based Python networking library that uses greenlet to provide a high-level synchronous API on top of the libevent event loop.</p>
+</dd>
+</dl>
+
+<h3 id='middleend'>Middle-End</h3>
+
+<p>J&#8217;appelle &#8220;Middle-end&#8221; la partie entre le backend et le frontend, en l&#8217;occurrence le CouchDB.</p>
+
+<h4 id='couchdb'>CouchDB</h4>
+
+<dl>
+<dt>CouchDB</dt>
+
+<dd><a href='http://couchdb.apache.org'>http://couchdb.apache.org</a></dd>
+
+<dd>
+<p>Apache CouchDB™ is a database that uses JSON for documents, JavaScript for MapReduce queries,</p>
+</dd>
+</dl>
+
+<p>CouchDB sert au stockage a long terme des documents comme la configuration et les résultats des nuits.</p>
+
+<h5 id='pourquoi'>Pourquoi</h5>
+
+<p>Le principe de stockage en document est adapté a l&#8217;application sleep. Les configurations et les nuits sont des documents JSON n&#8217;ayant pas de relations entre eux.</p>
+
+<p>L&#8217;interface HTTP de CouchDB est utilisée par le frontend pour la consultation des données par l&#8217;utilisateur. Cette application frontend est même servie à partir de CouchDB en lui-même.</p>
+
+<p>Cela crée une séparation entre le frontend et le backend, qui ne communiquent pas entre eux. Il peut y avoir d&#8217;autres frontends qui manipulent les mêmes données en utilisant l&#8217;API de CouchDB. Cela évite par ailleurs d&#8217;avoir à coder une telle API.</p>
+
+<h3 id='frontend'>Frontend</h3>
+
+<p>Le frontend est une application CouchApp, en javascript.</p>
+
+<h4 id='framework_javascript'>Framework Javascript</h4>
+
+<dl>
+<dt>Backbone</dt>
+
+<dd><a href='http://backbonejs.org'>http://backbonejs.org</a></dd>
+
+<dd>
+<p>Backbone.js gives structure to web applications by providing models with key-value binding and custom events, collections with a rich API of enumerable functions, views with declarative event handling, and connects it all to your existing API over a RESTful JSON interface.</p>
+</dd>
+</dl>
+
+<h5 id='pourquoi'>Pourquoi</h5>
+
+<p>Backbone nous permet de séparer le frontend en couches model/vues pour une application html5 plus propre et fiable.</p>
+<hr />
+<h3 id='tooling'>Tooling</h3>
+
+<p>Une liste des outils utilisés pour faciliter le développement/déploiement/exploitation:</p>
+
+<ul>
+<li>
+<dl>
+<dt>Virtualenv</dt>
+
+<dd><a href='http://pypi.python.org/pypi/virtualenv'>http://pypi.python.org/pypi/virtualenv</a></dd>
+
+<dd>
+<p>Virtual Python Environment builder</p>
+</dd>
+</dl>
+
+<p>Permet d&#8217;avoir un environnement separé pour le code Python, indépendamment des packages python du système. En outre, ne nécessite donc pas de root pour leur installation. Facilite l&#8217;installation et le deploiement.</p>
+</li>
+
+<li>
+<dl>
+<dt>Fabric</dt>
+
+<dd><a href='http://fabfile.org'>http://fabfile.org/</a></dd>
+
+<dd>
+<p>Fabric is a Python (2.5 or higher) library and command-line tool for streamlining the use of SSH for application deployment or systems administration tasks.</p>
+</dd>
+</dl>
+
+<p>L&#8217;installation et le déploiement sont automatisés avec Fabric. Pousser une nouvelle version du projet sur les serveurs distant ne requiert qu&#8217;une seule commande et prend aussi en charge l&#8217;installation de nouvelles dépendances ainsi que le redémarrage des services.</p>
+</li>
+
+<li>
+<dl>
+<dt>Supervisor</dt>
+
+<dd><a href='http://supervisord.org'>http://supervisord.org</a></dd>
+
+<dd>
+<p>Supervisor is a client/server system that allows its users to monitor and control a number of processes on UNIX-like operating systems.</p>
+</dd>
+</dl>
+
+<p>Comme son nom l&#8217;indique, il supervise les services de l&#8217;application, comme le backend et le celeryd. L&#8217;avantage est qu&#8217;il est contrôlable par l&#8217;utilisateur et facilement scriptable. Le redémarrage par fabric lors des mises a jour est donc simple. Il vérifie aussi si les services démarrent correctement et peut les rédemarrer automatiquement en cas de crash.</p>
+</li>
+
+<li>
+<dl>
+<dt>Kanso</dt>
+
+<dd><a href='http://kan.so'>http://kan.so</a></dd>
+
+<dd>
+<p>Kanso is the best way to create and share apps on CouchDB.</p>
+</dd>
+</dl>
+
+<p>Outil de deploiement/packaging d&#8217;applications CouchDB.</p>
+</li>
+</ul>
+<div class='footnotes'><hr /><ol><li id='fn:1'>
+<p>En informatique, le modèle d&#8217;acteur est un modèle mathématique qui définit les acteurs comme les seules entités nécessaires au calcul concurrent. En réponse à un message, un acteur effectue un traitement, crée d&#8217;autres acteurs et envoie d&#8217;autres messages.</p>
+<a href='#fnref:1' rev='footnote'>&#8617;</a></li><li id='fn:2'>
+<p>Time To Live</p>
+<a href='#fnref:2' rev='footnote'>&#8617;</a></li></ol></div>
