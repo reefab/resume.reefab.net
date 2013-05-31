@@ -78,7 +78,7 @@
 
 <h5 id='pourquoi'>Pourquoi</h5>
 
-<p>L&#8217;intérêt est de séparer chaque traitement en tâche distincte. Ces tâches sont des &#8220;Acteurs<sup id='fnref:1'><a href='#fn:1' rel='footnote'>1</a></sup>&#8221; pour garantir une cohérence des traitements. Ceux-ci etant potentiellement assez gourmands en temps processeur, il est possible d&#8217;en exécuter plusieurs par processeurs/core.</p>
+<p>L&#8217;intérêt est de séparer chaque traitement en tâche distincte. Ces tâches sont des &#8220;Acteurs<sup id='fnref:1'><a rel='footnote' href='#fn:1'>1</a></sup>&#8221; pour garantir une cohérence des traitements. Ceux-ci etant potentiellement assez gourmands en temps processeur, il est possible d&#8217;en exécuter plusieurs par processeurs/core.</p>
 
 <p>Nous ne faisons que stocker les évènements dans une queue Redis par utilisateur et envoyer un message a Celery pour lui dire de recalculer la nuit avec ces événements lorsqu&#8217;un nouveau est reçu.</p>
 
@@ -110,7 +110,7 @@
 
 <p>Redis est simple et rapide et dispose des fonctionnalités nécessaires.</p>
 
-<p>Toutes les données inscrites dans le Redis ont un TTL<sup id='fnref:2'><a href='#fn:2' rel='footnote'>2</a></sup>, ce qui évite d&#8217;amasser un nombre croissant de données ou d&#8217;avoir à implémenter un système de nettoyage. Cela permet aussi de garantir que les évènements ne sont pas conservés plus de 24h pour respecter la vie privée de l&#8217;utilisateur.</p>
+<p>Toutes les données inscrites dans le Redis ont un TTL<sup id='fnref:2'><a rel='footnote' href='#fn:2'>2</a></sup>, ce qui évite d&#8217;amasser un nombre croissant de données ou d&#8217;avoir à implémenter un système de nettoyage. Cela permet aussi de garantir que les évènements ne sont pas conservés plus de 24h pour respecter la vie privée de l&#8217;utilisateur.</p>
 
 <h4 id='microframework_web'>Micro-Framework Web</h4>
 
@@ -249,6 +249,6 @@
 </ul>
 <div class='footnotes'><hr /><ol><li id='fn:1'>
 <p>En informatique, le modèle d&#8217;acteur est un modèle mathématique qui définit les acteurs comme les seules entités nécessaires au calcul concurrent. En réponse à un message, un acteur effectue un traitement, crée d&#8217;autres acteurs et envoie d&#8217;autres messages.</p>
-<a href='#fnref:1' rev='footnote'>&#8617;</a></li><li id='fn:2'>
+<a rev='footnote' href='#fnref:1'>&#8617;</a></li><li id='fn:2'>
 <p>Time To Live</p>
-<a href='#fnref:2' rev='footnote'>&#8617;</a></li></ol></div>
+<a rev='footnote' href='#fnref:2'>&#8617;</a></li></ol></div>
