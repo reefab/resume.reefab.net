@@ -11,12 +11,9 @@
     <meta name="description" content="Responsive HTML5 Resume/CV Template for Developers">
     <meta name="author" content="Xiaoying Riley at 3rd Wave Media">
     <link rel="shortcut icon" href="favicon.ico">
-    <link href='https://fonts.googleapis.com/css?family=Roboto:400,500,400italic,300italic,300,500italic,700,700italic,900,900italic' rel='stylesheet' type='text/css'>
     <!-- Global CSS -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-    <!-- Plugins CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-
+    <link rel="stylesheet" href="stylesheets/font-awesome.min.css">
+    <link rel="stylesheet" href="stylesheets/bootstrap.min.css">
     <!-- Theme CSS -->
     <link id="theme-style" rel="stylesheet" href="stylesheets/styles.css">
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
@@ -181,7 +178,7 @@
 <p>(Conception IOT) Note: En tant que prestataire (cf. Ligos ci-dessous) puis employé.</p>
 
 <ul>
-<li>Développement d’une application Python/Celery pour l’analyse du sommeil par accéléromètre.</li>
+<li>Développement d’une application Python pour l’analyse du sommeil par accéléromètre.</li>
 
 <li>Administration système.</li>
 </ul>
@@ -206,13 +203,13 @@
 <p>Diverses réalisations:</p>
 
 <ul>
-<li>Crawler de site web sous Python/Twisted (avec scrapy) pour extraction de données produits. Stockage sous CouchDB. Création d’un algorithme d’analyse d’image pour extraire les couleurs des vêtements portés sur les photos.</li>
+<li>Crawler de site web sous Python pour extraction de données produits. Stockage sous CouchDB. Création d’un algorithme d’analyse d’image pour extraire les couleurs des vêtements portés sur les photos.</li>
 
-<li>Prototype de Dashboard en HTML5 spécial iPad pour le suivi des données financières d’une entreprise: Coffescript/Spine/CouchDB/Jquery.</li>
+<li>Prototype de Dashboard SPA pour le suivi des données financières d’une entreprise en quasi temps réel.</li>
 
 <li>Prototype de générateur de sites statiques pour des clients pouvant subir de forts trafics en Ruby/MongoDB.</li>
 
-<li>Création d’une application Python/Celery pour l’analyse du sommeil par accéléromètre (projet continué par la suite chez le client).</li>
+<li>Création d’une application Python pour l’analyse du sommeil par accéléromètre (projet continué par la suite chez le client).</li>
 </ul>
 </p>
         </div>
@@ -414,9 +411,6 @@
                 <h3 class="level-title">Ruby</h3>
             </div>
             <div class="item">
-                <h3 class="level-title">Coffescript</h3>
-            </div>
-            <div class="item">
                 <h3 class="level-title">CouchDB</h3>
             </div>
             <div class="item">
@@ -472,8 +466,8 @@
     <footer class="footer">
 </footer>
 
-<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script src="js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 <script type="text/javascript">
     jQuery(document).ready(function($){$(".level-bar-inner").css("width","0"),$(window).on("load",function(){$(".level-bar-inner").each(function(){var n=$(this).data("level");$(this).animate({width:n},800)})})});
 </script>
